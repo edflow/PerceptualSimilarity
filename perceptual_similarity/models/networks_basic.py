@@ -20,7 +20,7 @@ from perceptual_similarity.util import util
 # Off-the-shelf deep network
 class PNet(nn.Module):
     '''Pre-trained network with all channels equally weighted by default'''
-    def __init__(self, pnet_type='vgg', pnet_rand=False, use_gpu=True):
+    def __init__(self, pnet_type='vgg', pnet_rand=False, use_gpu=True, device = None, resnet_50_model_name = None):
         super(PNet, self).__init__()
 
         self.use_gpu = use_gpu
@@ -36,16 +36,22 @@ class PNet(nn.Module):
         elif(self.pnet_type=='alex'):
             self.net = pn.alexnet(pretrained=not self.pnet_rand,requires_grad=False)
         elif(self.pnet_type[:-2]=='resnet'):
-            self.net = pn.resnet(pretrained=not self.pnet_rand,requires_grad=False, num=int(self.pnet_type[-2:]))
+            self.net = pn.resnet(pretrained=not self.pnet_rand,requires_grad=False, num=int(self.pnet_type[-2:]),
+                                 load_resnet50_from_url=True, model_name=resnet_50_model_name, device = device) #TODO: make nicer by passing these as arguments
         elif(self.pnet_type=='squeeze'):
             self.net = pn.squeezenet(pretrained=not self.pnet_rand,requires_grad=False)
 
         self.L = self.net.N_slices
 
         if(use_gpu):
-            self.net.cuda()
-            self.shift = self.shift.cuda()
-            self.scale = self.scale.cuda()
+            if device is not None:
+                self.net.to(device)
+                self.shift = self.shift.to(device)
+                self.scale = self.scale.to(device)
+            else:
+                self.net.cuda()
+                self.shift = self.shift.cuda()
+                self.scale = self.scale.cuda()
 
     def forward(self, in0, in1, retPerLayer=False):
         in0_sc = (in0 - self.shift.expand_as(in0))/self.scale.expand_as(in0)
@@ -73,7 +79,7 @@ class PNet(nn.Module):
 
 # Learned perceptual metric
 class PNetLin(nn.Module):
-    def __init__(self, pnet_type='vgg', pnet_rand=False, pnet_tune=False, use_dropout=True, use_gpu=True, spatial=False, version='0.1'):
+    def __init__(self, pnet_type='vgg', pnet_rand=False, pnet_tune=False, use_dropout=True, use_gpu=True, spatial=False, version='0.1', device = None):
         super(PNetLin, self).__init__()
 
         self.use_gpu = use_gpu
@@ -113,20 +119,36 @@ class PNetLin(nn.Module):
         self.scale = torch.autograd.Variable(torch.Tensor([.458, .448, .450]).view(1,3,1,1))
 
         if(use_gpu):
-            if(self.pnet_tune):
-                self.net.cuda()
+            if device is not None:
+                if(self.pnet_tune):
+                    self.net.cuda().to(device)
+                else:
+                    self.net[0].cuda().to(device)
+                self.shift = self.shift.cuda().to(device)
+                self.scale = self.scale.cuda().to(device)
+                self.lin0.cuda().to(device)
+                self.lin1.cuda().to(device)
+                self.lin2.cuda().to(device)
+                self.lin3.cuda().to(device)
+                self.lin4.cuda().to(device)
+                if(self.pnet_type=='squeeze'):
+                    self.lin5.cuda().to(device)
+                    self.lin6.cuda().to(device)
             else:
-                self.net[0].cuda()
-            self.shift = self.shift.cuda()
-            self.scale = self.scale.cuda()
-            self.lin0.cuda()
-            self.lin1.cuda()
-            self.lin2.cuda()
-            self.lin3.cuda()
-            self.lin4.cuda()
-            if(self.pnet_type=='squeeze'):
-                self.lin5.cuda()
-                self.lin6.cuda()
+                if(self.pnet_tune):
+                    self.net.cuda()
+                else:
+                    self.net[0].cuda()
+                self.shift = self.shift.cuda()
+                self.scale = self.scale.cuda()
+                self.lin0.cuda()
+                self.lin1.cuda()
+                self.lin2.cuda()
+                self.lin3.cuda()
+                self.lin4.cuda()
+                if(self.pnet_type=='squeeze'):
+                    self.lin5.cuda()
+                    self.lin6.cuda()
 
     def forward(self, in0, in1):
         in0_sc = (in0 - self.shift.expand_as(in0))/self.scale.expand_as(in0)

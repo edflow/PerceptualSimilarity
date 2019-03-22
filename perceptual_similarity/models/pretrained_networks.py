@@ -1,6 +1,7 @@
 from collections import namedtuple
 import torch
 from torchvision import models
+from torch.utils import model_zoo
 from IPython import embed
 
 class squeezenet(torch.nn.Module):
@@ -135,16 +136,39 @@ class vgg16(torch.nn.Module):
         return out
 
 
+def clean_state_dict(model_sd, parallel = True):
+    if not parallel:
+        return model_sd
+    from collections import OrderedDict
+    sd_new = OrderedDict()
+    for k, v in model_sd.items():
+        name = k[7:] # remove `module.`
+        sd_new[name] = v
+    return sd_new
+
 
 class resnet(torch.nn.Module):
-    def __init__(self, requires_grad=False, pretrained=True, num=18):
+    def __init__(self, requires_grad=False, pretrained=True, num=18, load_resnet50_from_url = False, model_name = None, device = None):
         super(resnet, self).__init__()
         if(num==18):
             self.net = models.resnet18(pretrained=pretrained)
         elif(num==34):
             self.net = models.resnet34(pretrained=pretrained)
         elif(num==50):
+            if load_resnet50_from_url:
+                pretrained = False
             self.net = models.resnet50(pretrained=pretrained)
+            if load_resnet50_from_url:
+                model_urls = {
+                    'resnet50_trained_on_SIN': 'https://bitbucket.org/robert_geirhos/texture-vs-shape-pretrained-models/raw/6f41d2e86fc60566f78de64ecff35cc61eb6436f/resnet50_train_60_epochs-c8e5653e.pth.tar',
+                    'resnet50_trained_on_SIN_and_IN': 'https://bitbucket.org/robert_geirhos/texture-vs-shape-pretrained-models/raw/60b770e128fffcbd8562a3ab3546c1a735432d03/resnet50_train_45_epochs_combined_IN_SF-2a0d100e.pth.tar',
+                    'resnet50_trained_on_SIN_and_IN_then_finetuned_on_IN': 'https://bitbucket.org/robert_geirhos/texture-vs-shape-pretrained-models/raw/60b770e128fffcbd8562a3ab3546c1a735432d03/resnet50_finetune_60_epochs_lr_decay_after_30_start_resnet50_train_45_epochs_combined_IN_SF-ca06340c.pth.tar',
+                }
+                assert model_name is not None, 'Enter one of '+str([pair[0] for pair in model_urls.items()])
+                checkpoint = model_zoo.load_url(model_urls[model_name], map_location=device)
+                state_dict = clean_state_dict(checkpoint["state_dict"])
+                self.net.load_state_dict(state_dict)
+                print('Loaded resnet50 from URL:', model_name)
         elif(num==101):
             self.net = models.resnet101(pretrained=pretrained)
         elif(num==152):
@@ -159,6 +183,10 @@ class resnet(torch.nn.Module):
         self.layer2 = self.net.layer2
         self.layer3 = self.net.layer3
         self.layer4 = self.net.layer4
+
+        if not requires_grad:
+            for param in self.parameters():
+                param.requires_grad = False
 
     def forward(self, X):
         h = self.conv1(X)

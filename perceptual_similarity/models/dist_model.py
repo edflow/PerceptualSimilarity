@@ -31,7 +31,7 @@ class DistModel(BaseModel):
                    pnet_tune=False, model_path=None, colorspace='Lab',
                    use_gpu=True, printNet=False, spatial=False,
                    spatial_shape=None, spatial_order=1, spatial_factor=None,
-                   is_train=False, lr=.0001, beta1=0.5, version='0.1'):
+                   is_train=False, lr=.0001, beta1=0.5, version='0.1', device=None, resnet50_model_name=None):
         '''
         INPUTS
             model - ['net-lin'] for linearly calibrated network
@@ -73,6 +73,7 @@ class DistModel(BaseModel):
         if(self.model == 'net-lin'):  # pretrained net + linear layer
             self.net = networks.PNetLin(
                 use_gpu=use_gpu,
+                device = device,
                 pnet_rand=pnet_rand,
                 pnet_tune=pnet_tune,
                 pnet_type=net,
@@ -100,7 +101,7 @@ class DistModel(BaseModel):
         elif(self.model == 'net'):  # pretrained network
             assert not self.spatial, \
                 'spatial argument not supported yet for uncalibrated networks'
-            self.net = networks.PNet(use_gpu=use_gpu, pnet_type=net)
+            self.net = networks.PNet(use_gpu=use_gpu, pnet_type=net, device = device, resnet_50_model_name=resnet50_model_name)
             self.is_fake_net = True
         elif(self.model in ['L2', 'l2']):
             # not really a network, only for testing

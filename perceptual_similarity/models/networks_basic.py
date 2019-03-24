@@ -37,7 +37,7 @@ class PNet(nn.Module):
             self.net = pn.alexnet(pretrained=not self.pnet_rand,requires_grad=False)
         elif(self.pnet_type[:-2]=='resnet'):
             self.net = pn.resnet(pretrained=not self.pnet_rand,requires_grad=False, num=int(self.pnet_type[-2:]),
-                                 load_resnet50_from_url=True, model_name=resnet_50_model_name, device = device) #TODO: make nicer by passing these as arguments
+                                 model_name=resnet_50_model_name, device = device)
         elif(self.pnet_type=='squeeze'):
             self.net = pn.squeezenet(pretrained=not self.pnet_rand,requires_grad=False)
 

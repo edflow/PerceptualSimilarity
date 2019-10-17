@@ -2,7 +2,6 @@ import numpy as np
 from models import dist_model as dm
 from data import data_loader as dl
 import argparse
-from IPython import embed
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--dataset_mode', type=str, default='2afc', help='[2afc,jnd]')
@@ -32,7 +31,6 @@ if(opt.model in ['net-lin','net']):
 elif(opt.model in ['l2','ssim']):
 	print('Testing model [%s]-[%s]'%(opt.model,opt.colorspace))
 
-# embed()
 # initialize data loader
 for dataset in opt.datasets:
 	data_loader = dl.CreateDataLoader(dataset,dataset_mode=opt.dataset_mode, batch_size=opt.batch_size)

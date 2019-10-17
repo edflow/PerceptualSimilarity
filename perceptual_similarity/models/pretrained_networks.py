@@ -2,7 +2,6 @@ from collections import namedtuple
 import torch
 from torchvision import models
 from torch.utils import model_zoo
-from IPython import embed
 
 class squeezenet(torch.nn.Module):
     def __init__(self, requires_grad=False, pretrained=True):

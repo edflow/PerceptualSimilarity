@@ -16,7 +16,6 @@ from scipy.ndimage import zoom
 # import fractions
 # import functools
 import skimage.transform
-# from IPython import embed
 
 from . import networks_basic as networks
 from perceptual_similarity.util import util

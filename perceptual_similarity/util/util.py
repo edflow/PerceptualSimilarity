@@ -11,7 +11,6 @@ import matplotlib.pyplot as plt
 from scipy.ndimage.interpolation import zoom
 from skimage.measure import compare_ssim
 import torch
-from IPython import embed
 import cv2
 from datetime import datetime
 
@@ -48,7 +47,6 @@ def psnr(p0, p1, peak=255.):
     return 10*np.log10(peak**2/np.mean((1.*p0-1.*p1)**2))
 
 def dssim(p0, p1, range=255.):
-    # embed()
     return (1 - compare_ssim(p0, p1, data_range=range, multichannel=True)) / 2.
 
 def rgb2lab(in_img,mean_cent=False):
@@ -371,7 +369,6 @@ class zeroClipper(object):
         self.frequency = frequency
 
     def __call__(self, module):
-        embed()
         if hasattr(module, 'weight'):
             # module.weight.data = torch.max(module.weight.data, 0)
             module.weight.data = torch.max(module.weight.data, 0) + 100

@@ -3,7 +3,6 @@ import torch
 import perceptual_similarity.util.util as util
 from torch.autograd import Variable
 from pdb import set_trace as st
-from IPython import embed
 
 class BaseModel():
     def __init__(self):
@@ -43,7 +42,6 @@ class BaseModel():
 
     # helper loading function that can be used by subclasses
     def load_network(self, network, network_label, epoch_label):
-        # embed()
         save_filename = '%s_net_%s.pth' % (epoch_label, network_label)
         save_path = os.path.join(self.save_dir, save_filename)
         print('Loading network from %s'%save_path)

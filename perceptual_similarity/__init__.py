@@ -22,12 +22,19 @@ class PerceptualLoss(torch.nn.Module):
         If normalize is on, assumes the images are between [0,1] and then scales thembetween [-1, 1]
         If normalize is false, assumes the images are already between [-1,+1]
 
-        Inputs pred and target are Nx3xHxW
+        Inputs pred and target are NxCxHxW
         Output pytorch Variable N long
+
+        If C=1, replicate channel dimension to allow for general vgg/resnet/... usage in perceptual loss
         """
         if normalize:
-            target = 2 * target  - 1
-            pred = 2 * pred  - 1
+            target = 2 * target - 1
+            pred = 2 * pred - 1
+
+        if pred.size(1) == 1:
+            assert target.size(1) == 1
+            pred = pred.repeat(1, 3, 1, 1)
+            target = target.repeat(1, 3, 1, 1)
 
         dist = self.model.forward_pair(target, pred)
 
